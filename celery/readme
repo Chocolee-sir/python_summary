@@ -1,0 +1,18 @@
+启动
+celery -A tasks worker  -l info -P eventlet
+
+
+>>> from tasks import add
+>>> add.delay(4, 4)
+
+>>> result = add.delay(4, 4)
+
+>>> result.ready()
+
+>>> result.get(timeout=1)
+
+>>> result.get(propagate=False)
+
+
+===========================================
+

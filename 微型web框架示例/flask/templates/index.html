@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>222222222</h1>
+
+    <h1>Index</h1>
+    {{k1}}
+    {{k2}}
+    <ul>
+        {% for item in k2%}
+            <li>{{item}}</li>
+        {%endfor%}
+    </ul>
+    {{k3}}
+    <ul>
+        {% for k,v in k3.items() %}
+            <li>{{k}}-{{v}}</li>
+        {%endfor%}
+    </ul>
+
+    {{k4()|safe}}
+</body>
+</html>

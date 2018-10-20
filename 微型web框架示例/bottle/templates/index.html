@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    {{name}}
+    <ul>
+        % for item in user_list:
+        <li>{{item['id']}} -- {{item['name']}}</li>
+        % end
+    </ul>
+
+    % test = 'chocolee'
+    {{test}}
+
+    % include('tpl.html', title='哈哈')
+
+    {{!jj()}}
+
+
+</body>
+</html>

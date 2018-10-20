@@ -1,0 +1,357 @@
+1.创建scrapy框架项目
+scrapy startproject lession01
+
+2.创建爬虫
+cd lession01
+scrapy genspider chouti dig.chouti.com
+
+
+
+
+  Scrapy框架：
+        - 下载页面
+        - 解析
+        - 并发
+        - 深度
+
+    安装：http://www.cnblogs.com/wupeiqi/articles/6229292.html
+        Linux
+          pip3 install scrapy
+
+
+        Windows
+              a. pip3 install wheel
+              b. 下载twisted http://www.lfd.uci.edu/~gohlke/pythonlibs/#twisted
+              c. 进入下载目录，执行 pip3 install Twisted‑17.1.0‑cp35‑cp35m‑win_amd64.whl
+              d. pip3 install scrapy
+              e. 下载并安装pywin32：https://sourceforge.net/projects/pywin32/files/
+
+  使用：
+      1. 指定初始URL
+      2. 解析响应内容
+          - 给调度器
+          - 给item；pipeline;用于做格式化；持久化
+
+
+    scrapy startproject day96
+
+      cd day96
+      scrapy genspider chouti chouti.com
+
+      打开chouti.py进行编辑
+
+      scrapy crawl chouti --nolog
+
+
+
+============================================================================
+Day97 Scrapy框架
+
+上节回顾：
+    命令：
+        scrapy startproject xxx
+        cd xxx
+        scrapy genspider name  name.com
+        scrapy crawl name
+    编写代码：
+        a. name不能省略
+        b. start_urls,起始URL地址
+        c. allowed_domains = ["chouti.com"] 允许的域名
+        d. 重写start_requests，指定初始处理请求的函数
+                def start_requests(self):
+                    for url in self.start_urls:
+                        yield Request(url,callback=self.parse1)
+        e. 响应response
+            repsonse.url
+            repsonse.text
+            repsonse.body
+            response.meta = {'depth': ‘深度’}
+
+        f. 采集数据
+
+            Selector(response=response).xpath()
+            //div
+            //div[@id="i1"]
+            //div[starts-with(@id,"i1")]
+            //div[re:test(@id,"i1")]
+            //div/a
+            #
+            obj.xpath('./')
+            obj.xpath('.//')
+
+
+            //div/a/text()
+            //div/a/@href
+
+            Selector().extract()
+            Selector().extract_first()
+
+
+            //a[@id]
+            //a/@id
+
+        g. yield Request(url='',callback='xx')
+
+        h. yield Item(name='xx',titile='xxx')
+
+        i. pipeline
+
+            class Foo:
+                def process_item(self,item,spider):
+                    ....
+
+            settings = {
+                "xx.xx.xxx.Foo1": 300,
+                "xx.xx.xxx.Foo2": 400,
+            }
+
+
+今日内容：
+
+    1. 避免访问重复URL
+        DUPEFILTER_CLASS = "day96.duplication.RepeatFilter"
+        DUPEFILTER_CLASS = "scrapy.dupefilters.RFPDupeFilter" # 默认
+
+        class RepeatFilter(object):
+
+            def __init__(self):
+                """
+                2. 对象初始化
+                """
+                self.visited_set = 数据库连接
+
+            @classmethod
+            def from_settings(cls, settings):
+                """
+                1. 创建对象
+                :param settings:
+                :return:
+                """
+                return cls()
+
+            def request_seen(self, request):
+                """
+                4. 检查是否已经访问过
+                :param request:
+                :return:
+                """
+                if request.url in self.visited_set:
+                    return True
+                self.visited_set.add(request.url)
+                return False
+
+            def open(self):  # can return deferred
+                """1.开始爬去"""
+                print('open')
+
+            def close(self, reason):  # can return a deferred
+                """
+                5. 停止爬取
+                :param reason:
+                :return:
+                """
+                print('close')
+
+            def log(self, request, spider):  # log that a request has been filtered
+                print('log....')
+
+
+    2. pipeline补充
+        from scrapy.exceptions import DropItem
+        class Day96Pipeline(object):
+
+            def __init__(self,conn_str):
+                self.conn_str = conn_str
+
+            @classmethod
+            def from_crawler(cls, crawler):
+                """
+                初始化时候，用于创建pipeline对象
+                :param crawler:
+                :return:
+                """
+                conn_str = crawler.settings.get('DB')
+                return cls(conn_str)
+
+            def open_spider(self,spider):
+                """
+                爬虫开始执行时，调用
+                :param spider:
+                :return:
+                """
+                self.conn = open(self.conn_str, 'a')
+
+            def close_spider(self,spider):
+                """
+                爬虫关闭时，被调用
+                :param spider:
+                :return:
+                """
+                self.conn.close()
+
+            def process_item(self, item, spider):
+                """
+                每当数据需要持久化时，就会被调用
+                :param item:
+                :param spider:
+                :return:
+                """
+                # if spider.name == 'chouti'
+                tpl = "%s\n%s\n\n" %(item['title'],item['href'])
+                self.conn.write(tpl)
+                # 交给下一个pipeline处理
+                return item
+                # 丢弃item，不交给
+                # raise DropItem()
+
+
+        """
+        4个方法
+        crawler.settings.get('setting中的配置文件名称且必须大写')
+        process_item方法中，如果抛出异常DropItem表示终止，否则继续交给后续的pipeline处理
+        spider进行判断
+        """
+
+    3. Cookie问题
+        from scrapy.http.cookies import CookieJar
+        cookie_obj = CookieJar()
+        cookie_obj.extract_cookies(response,response.request)
+        print(cookie_obj._cookies)
+
+
+    4. 扩展
+        EXTENSIONS = {
+           # 'scrapy.extensions.telnet.TelnetConsole': None,
+            'day96.extensions.MyExtend': 300,
+        }
+
+
+        from scrapy import signals
+        class MyExtend:
+
+            def __init__(self,crawler):
+                self.crawler = crawler
+                # 钩子上挂障碍物
+                # 在指定信号上注册操作
+                crawler.signals.connect(self.start, signals.engine_started)
+                crawler.signals.connect(self.close, signals.spider_closed)
+
+            @classmethod
+            def from_crawler(cls, crawler):
+                return cls(crawler)
+
+            def start(self):
+                print('signals.engine_started.start')
+
+            def close(self):
+                print('signals.spider_closed.close')
+
+
+
+    5. 配置文件
+
+
+    6. 代理
+        1. 默认依赖环境变量
+        2. 自定义：
+            class XXX:
+                def process_request(self, request, spider):
+                    # request.meta['proxy']
+                    # request.headers['Proxy-Authorization']
+
+            DOWNLOADER_MIDDLEWARES = {
+               'step8_king.middlewares.XXX': 500,
+            }
+
+    7. 证书
+
+
+        class Foo(ScrapyClientContextFactory):
+
+            def getCertificateOptions(self):
+                pkey
+                cery
+
+                return CertificateOptions(
+                        xx，
+                        信息，
+                        verify=False,
+                        method=getattr(self, 'method',
+                                       getattr(self, '_ssl_method', None)),
+                        fixBrokenPeers=True,
+                        acceptableCiphers=DEFAULT_CIPHERS)
+
+
+
+
+      8. 下载中间件
+
+            DownMiddleware1.process_request http://dig.chouti.com/
+            DownMiddleware2.process_request http://dig.chouti.com/
+
+            DownMiddleware2.process_response
+            DownMiddleware1.process_response
+
+            spider.reponse <200 http://dig.chouti.com/>
+
+            1. process_request下载完成，后续无需下载
+            2. process_response比如有return response
+
+
+
+      9. spider中间件
+
+            class SpiderMiddleware(object):
+
+                def process_spider_input(self,response, spider):
+                    '''
+                    下载完成，执行，然后交给parse处理
+                    :param response:
+                    :param spider:
+                    :return:
+                    '''
+                    pass
+
+                def process_spider_output(self,response, result, spider):
+                    '''
+                    spider处理完成，返回时调用
+                    :param response:
+                    :param result:
+                    :param spider:
+                    :return: 必须返回包含 Request 或 Item 对象的可迭代对象(iterable)
+                    '''
+                    return result
+
+                def process_spider_exception(self,response, exception, spider):
+                    '''
+                    异常调用
+                    :param response:
+                    :param exception:
+                    :param spider:
+                    :return: None,继续交给后续中间件处理异常；含 Response 或 Item 的可迭代对象(iterable)，交给调度器或pipeline
+                    '''
+                    return None
+
+
+                def process_start_requests(self,start_requests, spider):
+                    '''
+                    爬虫启动时调用
+                    :param start_requests:
+                    :param spider:
+                    :return: 包含 Request 对象的可迭代对象
+                    '''
+                    return start_requests
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,3 @@
+IO多路复用：  r w e = while ， 一句话，监听多个socket 对象。
+
+异步IO： 非阻塞的socket + IO多路复用
