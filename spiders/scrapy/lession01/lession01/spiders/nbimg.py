@@ -8,7 +8,7 @@ from ..items import nbimgItem
 class NbimgSpider(scrapy.Spider):
     name = 'nbimg'
     allowed_domains = ['97ccb.pw']
-    start_urls = ['http://339.97ccb.pw/pw/thread-htm-fid-16-page-5.html']
+    start_urls = ['http://xxxx']
 
     def parse(self, response):
         #print(response.url)
