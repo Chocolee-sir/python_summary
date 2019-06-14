@@ -15,7 +15,7 @@ class NbimgSpider(scrapy.Spider):
         url_list = Selector(response=response).xpath('//h3/a')
         for href in url_list:
             url = href.xpath('./@href').extract_first()
-            url = 'http://339.97ccb.pw/pw/%s' %url
+            url = 'http://xxx/%s' %url
             yield Request(url=url, callback=self.get_img)
 
     def get_img(self, response):
