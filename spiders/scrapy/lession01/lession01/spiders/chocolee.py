@@ -25,7 +25,7 @@ class ChocoleeSpider(scrapy.Spider):
 
         req = FormRequest(
             url="http://www.chocolee.cn/wp-login.php",
-            formdata={'log':'leesir', 'pwd':'Lyl890625!', 'submit':'登录', 'redirect_to':'http://www.chocolee.cn/wp-admin/', 'testcookie': '1'},
+            formdata={'log':'xxxxx', 'pwd':'xxxxx', 'submit':'登录', 'redirect_to':'http://www.chocolee.cn/wp-admin/', 'testcookie': '1'},
             callback=self.check_login,
             cookies=cookie_obj._cookies,
         )
